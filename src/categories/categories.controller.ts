@@ -8,6 +8,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ParametersValidationPipe } from 'src/common/pipes/parameters-validation.pipe';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dtos/categories.create.dto';
 import { UpdateCategoryDto } from './dtos/categories.update.dto';
@@ -29,7 +30,9 @@ export class CategoriesController {
   }
 
   @Get('/:name')
-  async getByName(@Param('name') name: string): Promise<Category> {
+  async getByName(
+    @Param('name', ParametersValidationPipe) name: string,
+  ): Promise<Category> {
     return await this.categoriesService.getByName(name);
   }
 
@@ -37,7 +40,7 @@ export class CategoriesController {
   @UsePipes(ValidationPipe)
   async update(
     @Body() updateDto: UpdateCategoryDto,
-    @Param('name') name: string,
+    @Param('name', ParametersValidationPipe) name: string,
   ): Promise<void> {
     return await this.categoriesService.update(name, updateDto);
   }

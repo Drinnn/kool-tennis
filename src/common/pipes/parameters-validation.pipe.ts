@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import capitalizeFirstLetter from 'src/helpers/capitalize-first-letter.helper';
 
-export class PlayerParametersValidationPipe implements PipeTransform {
+export class ParametersValidationPipe implements PipeTransform {
   transform(value: any, metadata: ArgumentMetadata) {
     if (!value)
       throw new BadRequestException(
