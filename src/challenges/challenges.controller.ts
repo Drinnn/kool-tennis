@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ParametersValidationPipe } from 'src/common/pipes/parameters-validation.pipe';
 import { ChallengesService } from './challenges.service';
+import { AssignMatchChallengedDto } from './dtos/challenges.assign-match.dto';
 import { CreateChallengeDto } from './dtos/challenges.create.dto';
 import { UpdateChallengeDto } from './dtos/challenges.update.dto';
 import { Challenge } from './interfaces/challenges.interface';
@@ -45,5 +46,13 @@ export class ChallengesController {
     @Param('_id', ParametersValidationPipe) _id: string,
   ): Promise<void> {
     return await this.challengesService.delete(_id);
+  }
+
+  @Post('/:_id')
+  async assignMatch(
+    @Body() assignDto: AssignMatchChallengedDto,
+    @Param('_id', ParametersValidationPipe) _id: string,
+  ): Promise<void> {
+    return await this.challengesService.assignMatch(_id, assignDto);
   }
 }

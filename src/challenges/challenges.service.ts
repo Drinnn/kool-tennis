@@ -6,8 +6,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CategoriesService } from 'src/categories/categories.service';
+import { MatchesService } from 'src/matches/matches.service';
 import { PlayersService } from 'src/players/players.service';
 import { ChallengeStatus } from './challenge-status.enum';
+import { AssignMatchChallengedDto } from './dtos/challenges.assign-match.dto';
 import { CreateChallengeDto } from './dtos/challenges.create.dto';
 import { UpdateChallengeDto } from './dtos/challenges.update.dto';
 import { Challenge } from './interfaces/challenges.interface';
@@ -18,6 +20,7 @@ export class ChallengesService {
     @InjectModel('Challenge') private readonly challengeModel: Model<Challenge>,
     private readonly playersService: PlayersService,
     private readonly categoriesService: CategoriesService,
+    private readonly matchesService: MatchesService,
   ) {}
 
   async create(createDto: CreateChallengeDto): Promise<Challenge> {
@@ -110,6 +113,43 @@ export class ChallengesService {
       throw new NotFoundException(`Challenge with ID ${_id} doesn't exists.`);
 
     existentChallenge.status = ChallengeStatus.CANCELED;
+
+    await existentChallenge.save();
+  }
+
+  async assignMatch(
+    _id: string,
+    assignDto: AssignMatchChallengedDto,
+  ): Promise<void> {
+    const { defender } = assignDto;
+    const existentChallenge = await this.challengeModel
+      .findOne({ _id })
+      .populate('players')
+      .exec();
+
+    if (!existentChallenge)
+      throw new NotFoundException(`Challenge with ID ${_id} doesn't exists.`);
+
+    const defenderExistsInChallenge = existentChallenge.players.filter(
+      (player) => {
+        return player._id == defender;
+      },
+    );
+
+    if (defenderExistsInChallenge.length === 0) {
+      throw new BadRequestException(
+        `Defender with ID ${defender} is not in challenge`,
+      );
+    }
+
+    const createdMatch = await this.matchesService.create({
+      categoryName: existentChallenge.categoryName,
+      players: existentChallenge.players,
+      defender: await this.playersService.getById(defender),
+      result: assignDto.result,
+    });
+
+    existentChallenge.match = createdMatch;
 
     await existentChallenge.save();
   }
