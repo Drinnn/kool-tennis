@@ -44,6 +44,21 @@ export class CategoriesService {
     return foundedCategory;
   }
 
+  async getByPlayerId(playerId: any): Promise<Category> {
+    const playerExists = await this.playersService.getById(playerId);
+    if (!playerExists) {
+      throw new BadRequestException(
+        `Player with ID ${playerId} doesn't exists.`,
+      );
+    }
+
+    return await this.categoryModel
+      .findOne()
+      .where('players')
+      .in(playerId)
+      .exec();
+  }
+
   async update(name: string, updateDto: UpdateCategoryDto): Promise<void> {
     const foundedCategory = await this.categoryModel.findOne({ name }).exec();
 
