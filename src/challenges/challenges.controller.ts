@@ -16,6 +16,7 @@ import { AssignMatchChallengedDto } from './dtos/challenges.assign-match.dto';
 import { CreateChallengeDto } from './dtos/challenges.create.dto';
 import { UpdateChallengeDto } from './dtos/challenges.update.dto';
 import { Challenge } from './interfaces/challenges.interface';
+import { ChallengeStatusValidationPipe } from './pipes/challenges.status-validation.pipe';
 
 @Controller('challenges')
 export class ChallengesController {
@@ -35,7 +36,7 @@ export class ChallengesController {
 
   @Put('/:_id')
   async update(
-    @Body() updateDto: UpdateChallengeDto,
+    @Body(ChallengeStatusValidationPipe) updateDto: UpdateChallengeDto,
     @Param('_id', ParametersValidationPipe) _id: string,
   ): Promise<void> {
     return await this.challengesService.update(_id, updateDto);
@@ -52,7 +53,7 @@ export class ChallengesController {
   async assignMatch(
     @Body() assignDto: AssignMatchChallengedDto,
     @Param('_id', ParametersValidationPipe) _id: string,
-  ): Promise<void> {
+  ): Promise<Challenge> {
     return await this.challengesService.assignMatch(_id, assignDto);
   }
 }

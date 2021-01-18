@@ -15,4 +15,8 @@ export class MatchesService {
 
     return await createdMatch.save();
   }
+
+  async delete(_id: string): Promise<void> {
+    await this.matchModel.deleteOne({ _id }).exec();
+  }
 }

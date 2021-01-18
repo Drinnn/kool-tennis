@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -65,7 +66,12 @@ export class ChallengesService {
   }
 
   async getAll(): Promise<Challenge[]> {
-    return await this.challengeModel.find().exec();
+    return await this.challengeModel
+      .find()
+      .populate('requester')
+      .populate('players')
+      .populate('match')
+      .exec();
   }
 
   async getByPlayerId(playerId: any): Promise<Challenge[]> {
@@ -90,37 +96,15 @@ export class ChallengesService {
     if (!existentChallenge)
       throw new NotFoundException(`Challenge with ID ${_id} doesn't exists.`);
 
-    const availableStatus = [
-      ChallengeStatus.ACCEPTED,
-      ChallengeStatus.DENIED,
-      ChallengeStatus.CANCELED,
-    ];
-
-    if (!availableStatus.includes(updateDto.status))
-      throw new BadRequestException(
-        `Invalid status. Available status for update: ACCEPTED, DENIED, CANCELED`,
-      );
-
     await this.challengeModel
       .findOneAndUpdate({ _id }, { $set: updateDto })
       .exec();
   }
 
-  async delete(_id: string): Promise<void> {
-    const existentChallenge = await this.challengeModel.findOne({ _id }).exec();
-
-    if (!existentChallenge)
-      throw new NotFoundException(`Challenge with ID ${_id} doesn't exists.`);
-
-    existentChallenge.status = ChallengeStatus.CANCELED;
-
-    await existentChallenge.save();
-  }
-
   async assignMatch(
     _id: string,
     assignDto: AssignMatchChallengedDto,
-  ): Promise<void> {
+  ): Promise<Challenge> {
     const { defender } = assignDto;
     const existentChallenge = await this.challengeModel
       .findOne({ _id })
@@ -150,6 +134,21 @@ export class ChallengesService {
     });
 
     existentChallenge.match = createdMatch;
+
+    try {
+      return await existentChallenge.save();
+    } catch (err) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async delete(_id: string): Promise<void> {
+    const existentChallenge = await this.challengeModel.findOne({ _id }).exec();
+
+    if (!existentChallenge)
+      throw new NotFoundException(`Challenge with ID ${_id} doesn't exists.`);
+
+    existentChallenge.status = ChallengeStatus.CANCELED;
 
     await existentChallenge.save();
   }
